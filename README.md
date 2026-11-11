@@ -31,11 +31,17 @@ installed as `haxe`, the way Haxe's own CI runs them. With `--haxe`, a suite tha
 with that Haxe too and fails only where the compiler fails alone, per project for misc; its
 `--divergences` entries are keyed `suite/project`.
 
+`corpus unit-hl` is not in the default set. It builds `tests/unit/compile-hl.hxml` (without `hl-check`)
+with the compiler and with `--haxe` (required), requires the two `unit.hl` files to be byte-identical
+except for the compile date, and requires both to run alike on `hl.exe` (`--hl-exe`), exit code and
+output without the `Generated at:` and `execution time:` lines. The suite expects utest a94f881, the pin in Haxe 4.3.7's CI (`tests/RunCi.hx`); UTest 2, which `haxelib` usually has, changed the `type` of `Assert.raises` to `Any`, so the suite's `exc` helper breaks and `haxe.Log.trace` is left null. The harness therefore exports that commit from the installed utest's git checkout into a cache under the temp root and points `HAXELIB_PATH` at it for both compilers (nothing installed or global changes). Each run's error and failure counts are printed.
+
 | Option | Meaning |
 | --- | --- |
 | `--compiler <path>` | The compiler under test |
 | `--haxe <path>` | Compare with this Haxe instead of the recordings |
 | `--std <path>` | `HAXE_STD_PATH` for every compile |
+| `--hl-exe <path>` | The `hl` that runs `unit-hl` (default: `hl` on `PATH`) |
 | `--cases <dir>`, `--expected <dir>` | Another family root and its recordings |
 | `--divergences <file>` | JSON object mapping `family/case` to a reason; listed cases may differ. Repeat it to merge several files |
 | `--family a,b`, `--exclude a,b` | Select families by name |

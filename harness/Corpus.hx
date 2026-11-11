@@ -21,12 +21,12 @@ class Corpus {
 		its summary lists. Listed divergences, keyed `suite/project`, may fail.
 	**/
 	public static function run(suites:Array<String>, compiler:Null<String>, haxe:Null<String>, std:Null<String>,
-			testsDir:String, junit:Null<String>, divergences:Map<String, String>):Int {
+			testsDir:String, junit:Null<String>, divergences:Map<String, String>, hlExe:String = "hl"):Int {
 		if (compiler == null) throw "--compiler is required";
 		if (!FileSystem.exists(compiler)) throw 'compiler not found: $compiler';
 		if (suites.length == 0) suites = all;
 		for (s in suites)
-			if (all.indexOf(s) < 0 && s != "display") throw 'unknown suite "$s"';
+			if (all.indexOf(s) < 0 && s != "display" && s != "unit-hl") throw 'unknown suite "$s"';
 
 		var shim = Path.join([Exec.tempRoot(), "haxe-conformance-shim-" + Std.random(0x7FFFFFF)]);
 		Exec.mkdirs(shim);
@@ -58,12 +58,17 @@ class Corpus {
 					steps.push({name: "sys", dir: "sys", args: ["compile-macro.hxml"].concat(system)});
 				case "threads": steps.push({name: "threads", dir: "threads", args: ["build.hxml", "--interp"]});
 				case "display": steps.push({name: "display", dir: "display", args: ["build.hxml"]});
+				case "unit-hl": steps.push({name: "unit-hl", dir: "unit", args: []});
 			}
 
 		var results:Array<SuiteResult> = [];
 		var known:Array<String> = [];
 		var stale:Array<String> = [];
 		for (step in steps) {
+			if (step.name == "unit-hl") {
+				results.push(UnitHl.run(compiler, haxe, std, hlExe, testsDir));
+				continue;
+			}
 			Sys.println('=== ${step.name}: haxe ${step.args.join(" ")}  (tests/${step.dir})');
 			var dir = Path.join([testsDir, step.dir]);
 			var t0 = Sys.time();

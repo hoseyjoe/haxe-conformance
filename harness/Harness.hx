@@ -10,6 +10,7 @@ typedef Opts = {
 	var compiler:Null<String>;
 	var haxe:Null<String>;
 	var std:Null<String>;
+	var hlExe:String;
 	var cases:String;
 	var expected:String;
 	var divergences:Array<String>;
@@ -45,7 +46,7 @@ class Harness {
 			case "list": list(o);
 			case "run": runCases(o, false);
 			case "record": runCases(o, true);
-			case "corpus": Corpus.run(o.positional, o.compiler, o.haxe, o.std, Path.join([libRoot, "tests"]), o.junit, loadDivergences(o));
+			case "corpus": Corpus.run(o.positional, o.compiler, o.haxe, o.std, Path.join([libRoot, "tests"]), o.junit, loadDivergences(o), o.hlExe);
 			case other:
 				Sys.println('unknown command "$other"');
 				usage();
@@ -65,7 +66,7 @@ commands:
   run                        run cases against a compiler
   record                     record Haxe's results under expected/
   corpus <suites>            run Haxe's own test suites (unit,misc,resolution,sourcemaps,
-                             nullsafety,sys,threads,display) with the compiler as `haxe`;
+                             nullsafety,sys,threads,display; unit-hl only when named) with the compiler as `haxe`;
                              with --haxe, a suite fails only where that Haxe passes, and
                              --divergences lists \"suite/project\" entries that may fail
 
@@ -73,6 +74,7 @@ options:
   --compiler <path>          the compiler under test (for record: Haxe 4.3.7)
   --haxe <path>              compare with this Haxe live instead of the recordings
   --std <path>               HAXE_STD_PATH for every compile
+  --hl-exe <path>            hl to run unit-hl with (default: hl on PATH)
   --cases <dir>              family root (default: this library's cases/)
   --expected <dir>           recordings (default: this library's expected/)
   --divergences <file>       JSON object: \"family/case\" -> reason; listed cases may differ;
@@ -93,7 +95,7 @@ options:
 
 	static function parse(args:Array<String>):Opts {
 		var o:Opts = {
-			positional: [], compiler: null, haxe: null, std: null,
+			positional: [], compiler: null, haxe: null, std: null, hlExe: "hl",
 			cases: Path.join([libRoot, "cases"]), expected: Path.join([libRoot, "expected"]), divergences: [],
 			families: [], exclude: [], costs: [], kinds: [], oracles: [], shard: null, jobs: 4, junit: null,
 			title: "haxe-conformance", verbose: false
@@ -110,6 +112,7 @@ options:
 				case "--compiler": o.compiler = resolve(value());
 				case "--haxe": o.haxe = resolveExe(value());
 				case "--std": o.std = resolve(value());
+				case "--hl-exe": o.hlExe = resolveExe(value());
 				case "--cases": o.cases = resolve(value());
 				case "--expected": o.expected = resolve(value());
 				case "--divergences": o.divergences.push(resolve(value()));
